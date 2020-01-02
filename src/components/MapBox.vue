@@ -56,32 +56,16 @@
     <!--The next div contains information to show the current zoom level of the map. This will only show on the
           development version of the application. To find the code controlling this, search for 'zoom level display' -->
     <div id="zoom-level-div" />
-    <button
-      id="fly"
-      @click="flyToHurricanePath()"
-    >
-      Fly
-    </button>
-    <button
-      id="jump"
-      @click="jumpTo()"
-    >
-      Jump
-    </button>
-    <button
-      id="jump2"
-      @click="jumpToEnd()"
-    >
-      Jump to end
-    </button>
-    <div id="coords" />
+    <HurricaneTrack />
   </div>
 </template>
 <script>
     import LoadingScreen from './LoadingScreen';
     import InternetExplorerPage from "./InternetExplorerPage";
     import QuestionControl from "./QuestionControl";
-    import mariaTrackGeoJSON from "../assets/hurricaneTracks/2017_maria";
+
+    import HurricaneTrack from "./HurricaneTrack";
+
     import michaelTrackGeoJSON from "../assets/hurricaneTracks/2018_michael";
 
     import {
@@ -105,7 +89,10 @@
             MglFullscreenControl,
             MglScaleControl,
             MglAttributionControl,
-            QuestionControl
+            QuestionControl,
+
+            HurricaneTrack,
+
         },
         props: {
             isInternetExplorer: {
@@ -128,9 +115,8 @@
                 pitch: 60, // tips the map from 0 to 60 degrees
                 bearing: 0, // starting rotation of the map from 0 to 360
                 isLoading: true,
-                hurricaneTrackArray: this.getHurricaneTrackAsArray(),
-                hurricaneTrackStyle: this.getHurricaneTrackStyle()
-
+                hurricaneData: michaelTrackGeoJSON,
+                hurricaneTrackArray: this.getHurricaneTrackAsArray()
             };
         },
         created() {
@@ -146,11 +132,17 @@
                 });
                 return hurricaneTrack;
             },
+            addHurricanePathToMap(hurricaneTrackGeoJSON) {
+                this.map.addSource("currentHurricaneData", {
+                    "type": "geojson",
+                    "data": hurricaneTrackGeoJSON
+                });
+            },
             getHurricaneTrackStyle() {
                 return {
                     'id': 'hurricane track',
                     'type': 'line',
-                    'source': 'michaelTrackGeoJSON',
+                    'source': 'currentHurricaneData',
                     'layout': {
                         'visibility': 'visible',
                     },
@@ -169,110 +161,13 @@
             addZoomLevelIndicator() {
                 document.getElementById("zoom-level-div").innerHTML = 'Current Zoom Level (listed for development purposes): ' + this.map.getZoom() ;
             },
-            addHurricanePathToMap(hurricaneTrackGeoJSON) {
-                this.map.addSource("michaelTrackGeoJSON", {
-                    "type": "geojson",
-                    "data": hurricaneTrackGeoJSON
-                });
-            },
-            jumpTo() {
-                let currentHurricaneTrack = this.hurricaneTrackArray;
-                let map = this.map;
-
-                let fly = function() {
-                    map.flyTo({
-                        center: currentHurricaneTrack[0],
-                        zoom: 5,
-                        bearing: 20,
-                        speed: 0.12, // make the flying slow
-                        curve: 1, // change the speed at which it zooms out
-                    });
-                };
-
-                let jump = function() {
-                    currentHurricaneTrack.forEach(function(obj,index) {
-                        setTimeout(function(){
-                            map.jumpTo({center: currentHurricaneTrack[index], zoom: 5})
-                            console.log('count ', index);
-                        }, index * 1000);
-                    });
-                };
-                // fly to the starting point
-                fly();
-                // use a promise to delay the start of the jumpTo action
-                let promise1 = new Promise(function(resolve, reject) {
-                    setTimeout(function() {
-                        resolve('time up');
-                    }, 7000);
-                });
-
-                promise1.then(function(value) {
-                    jump();
-                });
-            },
-            jumpToEnd() {
-                let endIndex = this.hurricaneTrackArray.length -1;
-                console.log('ran jump to end. this b end index ', endIndex)
-                this.map.jumpTo({center: this.hurricaneTrackArray[endIndex]})
-            },
-            flyToHurricanePath() {
-                let hurricaneTrack = this.hurricaneTrackArray;
-                const degreesToRadians = function(degrees) {
-                    return degrees * Math.PI / 180;
-                };
-                const distanceInKmBetweenEarthCoordinates = function(lat1, lon1, lat2, lon2) {
-                    let earthRadiusKm = 6371;
-                    let dLat = degreesToRadians(lat2-lat1);
-                    let dLon = degreesToRadians(lon2-lon1);
-                    lat1 = degreesToRadians(lat1);
-                    lat2 = degreesToRadians(lat2);
-                    let a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                            Math.sin(dLon/2) * Math.sin(dLon/2) * Math.cos(lat1) * Math.cos(lat2);
-                    let c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-                    return earthRadiusKm * c;
-                };
-                let coorDiv = document.getElementById("coords");
-                let map = this.map;
-
-                    let i = 0;
-                    let mapDistance = null;
-                    let distanceAdjustmentMultiplyer = 1;
-                    let baseDurationOfFlyToAction = 1000;
-                    let intervalId = setInterval(function(){
-                        if(i === hurricaneTrack.length - 1){
-                            clearInterval(intervalId);
-                        }
-                        coorDiv.innerHTML = 'the current coordinates ' + hurricaneTrack[i][0] + ', ' + hurricaneTrack[i][1]
-                        if (i < hurricaneTrack.length - 1) {
-                            mapDistance = distanceInKmBetweenEarthCoordinates(hurricaneTrack[i][0], hurricaneTrack[i][1], hurricaneTrack[i+1][0], hurricaneTrack[i+1][1]);
-                        }
-                        if (mapDistance !== 0) {
-                            distanceAdjustmentMultiplyer = baseDurationOfFlyToAction/mapDistance;
-                            console.log('this is the multiplier ', distanceAdjustmentMultiplyer)
-                        }
-                        coorDiv.innerHTML = 'the current coordinates are ' + hurricaneTrack[i][0] + ', ' + hurricaneTrack[i][1] + ', and the distance between is ' + mapDistance + ' kilometers.'
-
-                        map.flyTo({
-                            center: [hurricaneTrack[i][0], hurricaneTrack[i][1]],
-                            zoom: 7,
-                            bearing: 0,
-                            speed: 0.12, // make the flying slow
-                            curve: 1, // change the speed at which it zooms out
-                        });
-                        i++;
-                        console.log('duration ' + baseDurationOfFlyToAction/distanceAdjustmentMultiplyer)
-                        // }, baseDurationOfFlyToAction * distanceAdjustmentMultiplyer);
-                    }, baseDurationOfFlyToAction);
-
-            },
-
             onMapLoaded(event) {
                 this.map = event.map; // This gives us access to the map as an object but only after the map has loaded.
                 this.map.resize(); // This cures the mysterious whitespace that appears above the footer is was caused by the 'official' banner at the top.
                 this.map.touchZoomRotate.enable({ around: 'center' }); // Add pinch to zoom for touch devices.
                 this.map.touchZoomRotate.disableRotation(); // Disable the rotation functionality, but keep pinch to zoom.
                 this.map.fitBounds([[-125.3321, 23.8991], [-65.7421, 49.4325]]); // Once map is loaded, zoom in a bit more so that the map neatly fills the screen.
-                this.$store.map = event.map; // Add the map to the Vuex store so that we can use it in other components.
+                this.$store.map = this.map; // Add the map to the Vuex store so that we can use it in other components.
                 // Pause the code here to make sure the fitbounds has time to finish before fade away of loading screen.
                 setTimeout(() => { this.isLoading = false; }, 200);
                 // Add the current zoom level display. The zoom level should only show in 'development' versions of the application.
