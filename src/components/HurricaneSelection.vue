@@ -10,6 +10,7 @@
     </div>
   </div>
 </template>
+
 <script>
   import allHurricaneData from "../assets/hurricaneTracks/hurricaneData";
 

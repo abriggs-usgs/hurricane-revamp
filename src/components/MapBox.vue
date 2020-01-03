@@ -68,6 +68,8 @@
 
     import michaelTrackGeoJSON from "../assets/hurricaneTracks/2018_michael";
 
+    import allHurricaneData from "../assets/hurricaneTracks/allHurricaneData";
+
     import {
         MglMap,
         MglNavigationControl,
@@ -123,6 +125,36 @@
            this.map = null; // Once the map is loaded, this will allow us to access the map object in other methods
         },
         methods: {
+            addEachHurricaneAsSource(map) {
+                allHurricaneData.hurricanes.features.forEach(function(feature, index) {
+                    console.log('this is the feature ' + JSON.stringify(feature.properties))
+                    map.addSource(feature.properties.id, {
+                        "type": "geojson",
+                        "data": feature.properties
+                    });
+
+                    let hurricaneTrackStyle = {
+                        'id': feature.properties.id,
+                        'type': 'line',
+                        'source': feature.properties.id,
+                        'layout': {
+                            'visibility': 'visible',
+                        },
+                        'paint': {
+                            'line-color': 'red',
+                            'line-width': {
+                                'base': 2.55,
+                                'stops': [
+                                    [0, 4],
+                                    [20, 8]
+                                ]
+                            }
+                        }
+                    }
+
+                    map.addLayer(hurricaneTrackStyle);
+                })
+            },
             getHurricaneTrackAsArray() {
                 let hurricaneTrack = [];
                 michaelTrackGeoJSON.michaelData.features.forEach(function(feature) {
@@ -174,6 +206,9 @@
                 process.env.VUE_APP_ADD_ZOOM_LEVEL_DISPLAY === 'true' ? this.map.on("zoomend", this.addZoomLevelIndicator) : null;
 
                 this.addHurricanePathToMap(michaelTrackGeoJSON.michaelData);
+
+                this.addEachHurricaneAsSource(this.map);
+
                 this.map.addLayer(this.getHurricaneTrackStyle());
             }
         }
