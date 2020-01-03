@@ -56,17 +56,16 @@
     <!--The next div contains information to show the current zoom level of the map. This will only show on the
           development version of the application. To find the code controlling this, search for 'zoom level display' -->
     <div id="zoom-level-div" />
-    <HurricaneTrack />
+    <HurricaneSelection @selectedNewHurricane="toggleHurricaneTrackVisibility()" />
+    <CameraView />
   </div>
 </template>
 <script>
     import LoadingScreen from './LoadingScreen';
     import InternetExplorerPage from "./InternetExplorerPage";
     import QuestionControl from "./QuestionControl";
-
-    import HurricaneTrack from "./HurricaneTrack";
-
-    import michaelTrackGeoJSON from "../assets/hurricaneTracks/2018_michael";
+    import CameraView from "./CameraView";
+    import HurricaneSelection from "./HurricaneSelection";
 
     import allHurricaneData from "../assets/hurricaneTracks/allHurricaneData";
 
@@ -92,9 +91,8 @@
             MglScaleControl,
             MglAttributionControl,
             QuestionControl,
-
-            HurricaneTrack,
-
+            CameraView,
+            HurricaneSelection
         },
         props: {
             isInternetExplorer: {
@@ -116,18 +114,18 @@
                 center: [-95.7129, 37.0902],
                 pitch: 60, // tips the map from 0 to 60 degrees
                 bearing: 0, // starting rotation of the map from 0 to 360
-                isLoading: true,
-                hurricaneData: michaelTrackGeoJSON,
-                hurricaneTrackArray: this.getHurricaneTrackAsArray()
+                isLoading: true
             };
         },
         created() {
            this.map = null; // Once the map is loaded, this will allow us to access the map object in other methods
         },
         methods: {
-            addEachHurricaneAsSource(map) {
+            addHurricaneTracksToMap(map) {
+                let hslHues = this.getColorForTrack();
+
                 allHurricaneData.hurricanes.features.forEach(function(feature, index) {
-                    console.log('this is the feature ' + JSON.stringify(feature.properties))
+                    let color = 'hsl('+ hslHues[index] + ', 100%, 51%)';
                     map.addSource(feature.properties.id, {
                         "type": "geojson",
                         "data": feature.properties
@@ -141,9 +139,9 @@
                             'visibility': 'visible',
                         },
                         'paint': {
-                            'line-color': 'red',
+                            'line-color': color,
                             'line-width': {
-                                'base': 2.55,
+                                'base': 1.55,
                                 'stops': [
                                     [0, 4],
                                     [20, 8]
@@ -155,40 +153,39 @@
                     map.addLayer(hurricaneTrackStyle);
                 })
             },
-            getHurricaneTrackAsArray() {
-                let hurricaneTrack = [];
-                michaelTrackGeoJSON.michaelData.features.forEach(function(feature) {
-                    feature.geometry.coordinates.forEach(function (coordinateSet) {
-                        hurricaneTrack.push(coordinateSet)
-                    });
-                });
-                return hurricaneTrack;
-            },
-            addHurricanePathToMap(hurricaneTrackGeoJSON) {
-                this.map.addSource("currentHurricaneData", {
-                    "type": "geojson",
-                    "data": hurricaneTrackGeoJSON
-                });
-            },
-            getHurricaneTrackStyle() {
-                return {
-                    'id': 'hurricane track',
-                    'type': 'line',
-                    'source': 'currentHurricaneData',
-                    'layout': {
-                        'visibility': 'visible',
-                    },
-                    'paint': {
-                        'line-color': 'red',
-                        'line-width': {
-                            'base': 2.55,
-                            'stops': [
-                                [0, 4],
-                                [20, 8]
-                            ]
+            getColorForTrack() {
+                // Next we need to generate a list of colors based on the number of hurricanes we have.
+                // We will use HSL colors in the format hsl((hue, saturation, lightness).
+                // We will only adjust the hue. The 'hue' range is from 0-360, but we want to stay out the red
+                // range so will only use 45-290. We will use 45 and 290 as our start and end, then we will
+                // select additional points as needed based on the number of providers.
+                let hslHues = [];
+                let hslStartPoint = 45;
+                let hslEndPoint = 290;
+                let hslRange = hslEndPoint - hslStartPoint;
+                let hslRangeDivisor = allHurricaneData.hurricanes.features.length - 1;
+                let countToNextHslPoint = Math.floor(hslRange/hslRangeDivisor);
+                // Add the start point to our array of hsl color points.
+                hslHues.push(hslStartPoint);
+                if (allHurricaneData.hurricanes.features.length > 2) {
+                    let hslIntermediatePoint = hslStartPoint + countToNextHslPoint;
+                    // If there is more than one intermediate hsl point, loop to add; otherwise just add the one.
+                    if (hslRangeDivisor > 2) {
+                        for(let index = 0; index < hslRangeDivisor-1; index++) {
+                            hslHues.push(hslIntermediatePoint);
+                            hslIntermediatePoint = hslIntermediatePoint + countToNextHslPoint;
                         }
+                    } else {
+                        hslHues.push(hslIntermediatePoint);
                     }
                 }
+                // Add the hsl end point
+                hslHues.push(hslEndPoint);
+
+                return hslHues;
+            },
+            toggleHurricaneTrackVisibility() {
+                console.log('gonna do some toggling here')
             },
             addZoomLevelIndicator() {
                 document.getElementById("zoom-level-div").innerHTML = 'Current Zoom Level (listed for development purposes): ' + this.map.getZoom() ;
@@ -205,11 +202,7 @@
                 // Add the current zoom level display. The zoom level should only show in 'development' versions of the application.
                 process.env.VUE_APP_ADD_ZOOM_LEVEL_DISPLAY === 'true' ? this.map.on("zoomend", this.addZoomLevelIndicator) : null;
 
-                this.addHurricanePathToMap(michaelTrackGeoJSON.michaelData);
-
-                this.addEachHurricaneAsSource(this.map);
-
-                this.map.addLayer(this.getHurricaneTrackStyle());
+                this.addHurricaneTracksToMap(this.map);
             }
         }
     };

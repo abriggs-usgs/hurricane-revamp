@@ -1,34 +1,35 @@
 <template>
   <div id="hurricane-selection-container">
     <div
-      v-for="hurricane in dataForAllHurricanes.hurricanes"
-      :key="hurricane.name"
+      v-for="hurricane in allHurricaneData.hurricanes.features"
+      :key="hurricane.properties.name"
       class="hurricane-selection-button"
-      @click="addCurrentHurricaneDataToState(hurricane), $emit('selectedNewHurricane')"
+      @click="addCurrentHurricaneDataToState(hurricane.properties.features)"
     >
-      <button>{{ hurricane.name }} - {{ hurricane.year }}</button>
+      <button>{{ hurricane.properties.name }} - {{ hurricane.properties.year }}</button>
     </div>
   </div>
 </template>
 
 <script>
-  import allHurricaneData from "../assets/hurricaneTracks/hurricaneData";
+  import allHurricaneData from "../assets/hurricaneTracks/allHurricaneData";
 
     export default {
         name: "HurricaneSelection",
         data() {
             return {
-                dataForAllHurricanes: allHurricaneData
+                allHurricaneData: allHurricaneData
             };
         },
         methods: {
             addCurrentHurricaneDataToState(dataForCurrentHurricane) {
+                console.log('this is it ' + JSON.stringify(dataForCurrentHurricane))
                 this.getHurricaneTrackAsArray(dataForCurrentHurricane);
                 this.$store.dispatch('changeDataForSelectedHurricane', dataForCurrentHurricane);
            },
             getHurricaneTrackAsArray(dataForCurrentHurricane) {
                 let hurricaneTrack = [];
-                dataForCurrentHurricane.features.forEach(function(feature) {
+                dataForCurrentHurricane.forEach(function(feature) {
                     feature.geometry.coordinates.forEach(function (coordinateSet) {
                         hurricaneTrack.push(coordinateSet);
                     });
