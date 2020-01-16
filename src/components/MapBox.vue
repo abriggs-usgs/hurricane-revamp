@@ -56,8 +56,12 @@
     <!--The next div contains information to show the current zoom level of the map. This will only show on the
           development version of the application. To find the code controlling this, search for 'zoom level display' -->
     <div id="zoom-level-div" />
-    <HurricaneSelection @selectedNewHurricane="toggleHurricaneTrackVisibility()" />
+    <HurricaneSelection
+        @selectedNewHurricane="toggleHurricaneTrackVisibility()" />
     <CameraView />
+    <div id="add-custom-icon">
+      <button @click="addImageMarkers">Add Custom Markers</button>
+    </div>
   </div>
 </template>
 <script>
@@ -67,6 +71,8 @@
     import CameraView from "./CameraView";
     import HurricaneSelection from "./HurricaneSelection";
 
+    import mapboxgl from "mapbox-gl";
+
     import allHurricaneData from "../assets/hurricaneTracks/allHurricaneData";
 
     import {
@@ -75,7 +81,7 @@
         MglGeolocateControl,
         MglFullscreenControl,
         MglScaleControl,
-        MglAttributionControl
+        MglAttributionControl,
     } from "vue-mapbox";
     import mapStyles from "../assets/mapStyles/mapStyles";
 
@@ -120,6 +126,14 @@
         created() {
            this.map = null; // Once the map is loaded, this will allow us to access the map object in other methods
         },
+        computed: {
+            getCoordinatesForSelectedHurricane() {
+                return this.$store.getters.getCoordinatesForSelectedHurricane;
+            },
+            getDataForSelectedHurricane() {
+                return this.$store.getters.getDataForSelectedHurricane;
+            }
+        },
         methods: {
             addHurricaneTracksToMap(map) {
                 let hslHues = this.getColorForTrack();
@@ -148,10 +162,91 @@
                                 ]
                             }
                         }
-                    }
+                    };
 
                     map.addLayer(hurricaneTrackStyle);
                 })
+            },
+            findCorrectColorForStormType(stormType) {
+                const color = {
+                    'Tropical Wave':'#BEE500',
+                    'Tropical Depression':'#BED300',
+                    'Tropical Storm':'#BEC200',
+                    'Hurricane':'#BEB100',
+                    'Extratropical cyclone':'#BE9F00',
+                    'Subtropical depression':'#BE8E00',
+                    'Subtropical storm':'#BE7D00',
+                    'low pressure system':'#BE6B00',
+                    'non-tropical Disturbance':'#BE5A00',
+                    'Hurricane1':'#BE4900',
+                    'Hurricane2':'#BE3700',
+                    'Hurricane3':'#BE2600',
+                    'Hurricane4':'#BE1500',
+                    'Hurricane5':'#BF0400',
+                    'default':'#080808'
+                };
+
+
+                return (color[stormType] || color['default']);
+            },
+            addImageMarkers() {
+                let map = this.map;
+                let self = this;
+                let customImageMarkers = document.querySelectorAll('.custom-image-marker');
+                customImageMarkers.forEach(function(customImageMarker) {
+                    customImageMarker.parentNode.removeChild(customImageMarker)
+                });
+
+                let hurricaneData = this.getDataForSelectedHurricane;
+                console.log('should be name ' + JSON.stringify(hurricaneData.features))
+                hurricaneData.features.forEach(function(feature){
+                    let stormType = feature.properties.STORMTYPE;
+                    let stormTypeCoordinateSets = [];
+                    stormTypeCoordinateSets.push(feature.geometry.coordinates);
+                    stormTypeCoordinateSets.forEach(function(stormTypeCoordinateSet){
+                        let customMarkerDiv = document.createElement('div');
+                        console.log('this is coords', stormTypeCoordinateSets)
+                        customMarkerDiv.className = 'custom-image-marker';
+                        customMarkerDiv.style.backgroundColor = self.findCorrectColorForStormType(stormType);
+                        customMarkerDiv.style.width = '10px';
+                        customMarkerDiv.style.width = '10px';
+
+
+                                            new mapboxgl.Marker(customMarkerDiv)
+                            .setLngLat(stormTypeCoordinateSet)
+                            .addTo(map);
+
+
+
+                    });
+
+                    console.log('storm type ', feature.properties.STORMTYPE)
+                    console.log('this is color ', self.findCorrectColorForStormType(stormType))
+
+                })
+
+
+
+
+                // let hurricaneCoordinates = this.getCoordinatesForSelectedHurricane;
+                // console.log('should be awesome ' + JSON.stringify(hurricaneCoordinates))
+                // hurricaneCoordinates.forEach(function (coordinateSet) {
+                //     let el = document.createElement('div');
+                //     el.className = 'custom-image-marker';
+                //     el.style.backgroundImage =
+                //             'url(https://placekitten.com/g/40/40)';
+                //     el.style.width = '40px';
+                //     el.style.height = '40px';
+
+
+// add marker to map
+//                     new mapboxgl.Marker(el)
+//                             .setLngLat(coordinateSet)
+//                             .addTo(map);
+//                 });
+
+
+
             },
             getColorForTrack() {
                 // Next we need to generate a list of colors based on the number of hurricanes we have.
@@ -192,7 +287,7 @@
             },
             onMapLoaded(event) {
                 this.map = event.map; // This gives us access to the map as an object but only after the map has loaded.
-                this.map.resize(); // This cures the mysterious whitespace that appears above the footer is was caused by the 'official' banner at the top.
+                this.map.resize(); // This cures the mysterious whitespace that appears above the footer caused by the 'official' banner at the top.
                 this.map.touchZoomRotate.enable({ around: 'center' }); // Add pinch to zoom for touch devices.
                 this.map.touchZoomRotate.disableRotation(); // Disable the rotation functionality, but keep pinch to zoom.
                 this.map.fitBounds([[-125.3321, 23.8991], [-65.7421, 49.4325]]); // Once map is loaded, zoom in a bit more so that the map neatly fills the screen.
@@ -254,6 +349,13 @@
     min-height: 550px;
     display: flex;
     flex-direction: column;
+  }
+
+  #add-custom-icon {
+    display: flex;
+    button {
+      flex: 1;
+    }
   }
 
   @media screen and (min-width: 600px) and (min-height: 850px) {

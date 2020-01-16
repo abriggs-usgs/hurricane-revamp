@@ -4,7 +4,7 @@
       v-for="hurricane in allHurricaneData.hurricanes.features"
       :key="hurricane.properties.name"
       class="hurricane-selection-button"
-      @click="addCurrentHurricaneDataToState(hurricane.properties.features)"
+      @click="addCurrentHurricaneDataToState(hurricane.properties)"
     >
       <button>{{ hurricane.properties.name }} - {{ hurricane.properties.year }}</button>
     </div>
@@ -29,7 +29,7 @@
            },
             getHurricaneTrackAsArray(dataForCurrentHurricane) {
                 let hurricaneTrack = [];
-                dataForCurrentHurricane.forEach(function(feature) {
+                dataForCurrentHurricane.features.forEach(function(feature) {
                     feature.geometry.coordinates.forEach(function (coordinateSet) {
                         hurricaneTrack.push(coordinateSet);
                     });

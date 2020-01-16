@@ -22,7 +22,7 @@ export default {
                                 },
                                 "properties": {
                                     "STORMNUM": 14,
-                                    "STORMTYPE": "LO",
+                                    "STORMTYPE": "low pressure system",
                                     "SS": 0
                                 }
                             },
@@ -37,7 +37,7 @@ export default {
                                 },
                                 "properties": {
                                     "STORMNUM": 14,
-                                    "STORMTYPE": "TD",
+                                    "STORMTYPE": "Tropical Depression",
                                     "SS": 0
                                 }
                             },
@@ -55,7 +55,7 @@ export default {
                                 },
                                 "properties": {
                                     "STORMNUM": 14,
-                                    "STORMTYPE": "TS",
+                                    "STORMTYPE": "Tropical Storm",
                                     "SS": 0
                                 }
                             },
@@ -80,7 +80,7 @@ export default {
                                 },
                                 "properties": {
                                     "STORMNUM": 14,
-                                    "STORMTYPE": "HU",
+                                    "STORMTYPE": "Hurricane1",
                                     "SS": 1
                                 }
                             },
@@ -97,7 +97,7 @@ export default {
                                 },
                                 "properties": {
                                     "STORMNUM": 14,
-                                    "STORMTYPE": "TS",
+                                    "STORMTYPE": "Tropical Storm",
                                     "SS": 0
                                 }
                             },
@@ -124,7 +124,7 @@ export default {
                                 },
                                 "properties": {
                                     "STORMNUM": 14,
-                                    "STORMTYPE": "EX",
+                                    "STORMTYPE": "Extratropical cyclone",
                                     "SS": 0
                                 }
                             }

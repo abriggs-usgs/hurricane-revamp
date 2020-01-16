@@ -31,6 +31,32 @@
             }
         },
         methods: {
+            findBearing(startingLatitude, startingLongitude, destinationLatitude, destinationLongitude) {
+                const getRadiansFromDegrees = function toRadians(degrees) {
+                    return degrees * Math.PI / 180;
+                };
+
+                // Converts from radians to degrees.
+                const getDegreesFromRadians = function toDegrees(radians) {
+                    return radians * 180 / Math.PI;
+                };
+                startingLatitude = getRadiansFromDegrees(startingLatitude);
+                startingLongitude = getRadiansFromDegrees(startingLongitude);
+                destinationLatitude = getRadiansFromDegrees(destinationLatitude);
+                destinationLongitude = getRadiansFromDegrees(destinationLongitude);
+
+                let dLong = destinationLatitude - startingLatitude;
+
+                let dPhi = Math.log(Math.tan(destinationLatitude/2.0+Math.PI/4.0)/Math.tan(startingLatitude/2.0+Math.PI/4.0));
+                if (Math.abs(dLong) > Math.PI){
+                    if (dLong > 0.0)
+                        dLong = -(2.0 * Math.PI - dLong);
+                    else
+                        dLong = (2.0 * Math.PI + dLong);
+                }
+
+                return (getDegreesFromRadians(Math.atan2(dLong, dPhi)) + 360.0) % 360.0;
+            },
             flyToHurricanePath: function() {
                 let hurricaneTrack = this.coordinatesForSelectedHurricanePath;
                 const degreesToRadians = function(degrees) {
@@ -52,7 +78,7 @@
 
                 let i = 0;
                 let mapDistance = null;
-                let distanceAdjustmentMultiplyer = 1;
+                let distanceAdjustmentMultiplier = 1;
                 let baseDurationOfFlyToAction = 1000;
                 let intervalId = setInterval(function(){
                     if(i === hurricaneTrack.length - 1){
@@ -63,8 +89,8 @@
                         mapDistance = distanceInKmBetweenEarthCoordinates(hurricaneTrack[i][0], hurricaneTrack[i][1], hurricaneTrack[i+1][0], hurricaneTrack[i+1][1]);
                     }
                     if (mapDistance !== 0) {
-                        distanceAdjustmentMultiplyer = baseDurationOfFlyToAction/mapDistance;
-                        console.log('this is the multiplier ', distanceAdjustmentMultiplyer)
+                        distanceAdjustmentMultiplier = baseDurationOfFlyToAction/mapDistance;
+                        console.log('this is the multiplier ', distanceAdjustmentMultiplier)
                     }
                     coorDiv.innerHTML = 'the current coordinates are ' + hurricaneTrack[i][0] + ', ' + hurricaneTrack[i][1] + ', and the distance between is ' + mapDistance + ' kilometers.'
 
@@ -76,15 +102,17 @@
                         curve: 1, // change the speed at which it zooms out
                     });
                     i++;
-                    console.log('duration ' + baseDurationOfFlyToAction/distanceAdjustmentMultiplyer)
+                    console.log('duration ' + baseDurationOfFlyToAction/distanceAdjustmentMultiplier)
                 }, baseDurationOfFlyToAction)
             },
             jumpToHurricanePath: function() {
                 let currentHurricaneTrack = this.coordinatesForSelectedHurricanePath;
                 let map = this.$store.map;
+                let self = this;
 
-                let fly = function() {
+                let flyToStart = function() {
                     map.flyTo({
+
                         center: currentHurricaneTrack[0],
                         zoom: 5,
                         bearing: 20,
@@ -93,24 +121,43 @@
                     });
                 };
 
+                const createCurrentAndNextCoordinateList = function(currentCoordinates, nextCoordinates) {
+                    let currentAndNextCoordinates = [];
+                    currentAndNextCoordinates.push(currentCoordinates, nextCoordinates);
+                    return currentAndNextCoordinates
+                };
+
                 let jump = function() {
-                    currentHurricaneTrack.forEach(function(obj,index) {
+                    let currentCoordinatePair = [];
+
+                    currentHurricaneTrack.forEach(function(nextCoordinatePair, index) {
                         setTimeout(function(){
-                            map.jumpTo({center: currentHurricaneTrack[index], zoom: 5})
-                            console.log('count ', index);
+                            if (index === 0) {
+                                let mapCenterCoordinates = map.getCenter();
+                                currentCoordinatePair.push(mapCenterCoordinates.lng, mapCenterCoordinates.lat);
+                            }
+                            let currentAndNextCoordinates = createCurrentAndNextCoordinateList(currentCoordinatePair, nextCoordinatePair);
+                            let bearing = self.findBearing(currentAndNextCoordinates[0][1], currentAndNextCoordinates[0][0], currentAndNextCoordinates[1][1], currentAndNextCoordinates[1][0]);
+                            // Note: we have to invert the bearing because Mapbox GL JS runs bearing counter clockwise, while everyone else calculates clockwise
+                            bearing = bearing * -1;
+
+                            currentCoordinatePair = nextCoordinatePair;
+
+                            map.jumpTo({center: currentHurricaneTrack[index], zoom: 5, bearing: bearing });
+                            console.log('this is bearing ', bearing)
                         }, index * 1000);
                     });
                 };
                 // fly to the starting point
-                fly();
+                flyToStart();
                 // use a promise to delay the start of the jumpTo action
-                let promise1 = new Promise(function(resolve, reject) {
+                let promise = new Promise(function(resolve, reject) {
                     setTimeout(function() {
                         resolve('time up');
                     }, 7000);
                 });
 
-                promise1.then(function(value) {
+                promise.then(function(value) {
                     jump();
                 });
             }
