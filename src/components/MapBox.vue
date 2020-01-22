@@ -168,7 +168,7 @@
                     map.addLayer(hurricaneTrackStyle);
                 })
             },
-            findCorrectColorForStormType(stormType) {
+            getStormIconStyles(stormType) {
                 const stormIconStyles = {
                     'low pressure system':['#BEE500',process.env.VUE_APP_STORM_ICON_INTENSITY_1],
                     'non-tropical Disturbance':['#BED300',process.env.VUE_APP_STORM_ICON_INTENSITY_1],
@@ -188,14 +188,16 @@
 
                 return (stormIconStyles[stormType] || stormIconStyles['default']);
             },
+            removeElements(ListOfElements) {
+                ListOfElements.forEach(function(element) {
+                    element.parentNode.removeChild(element)
+                });
+            },
             addImageMarkers() {
                 let map = this.map;
                 let self = this;
-                // remove any markers for the map
-                let customImageMarkers = document.querySelectorAll('.custom-image-marker');
-                customImageMarkers.forEach(function(customImageMarker) {
-                    customImageMarker.parentNode.removeChild(customImageMarker)
-                });
+                // If there are any markers on the map, remove them.
+                self.removeElements(document.querySelectorAll('.mapboxgl-marker'));
 
                 let hurricaneData = this.getDataForSelectedHurricane;
                 hurricaneData.features.forEach(function(feature){
@@ -204,7 +206,7 @@
                     stormTypeCoordinateSets = feature.geometry.coordinates;
 
                     stormTypeCoordinateSets.forEach(function(stormTypeCoordinateSet){
-                        let stormIconStyles = self.findCorrectColorForStormType(stormType);
+                        let stormIconStyles = self.getStormIconStyles(stormType);
                         let customMarkerDiv = document.createElement('div');
                         customMarkerDiv.className = 'custom-image-marker';
                         customMarkerDiv.style.backgroundImage ='url(' + stormIconStyles[1] + ')';
@@ -215,17 +217,9 @@
                         customMarkerDiv.style.height = '40px';
                         customMarkerDiv.style.borderRadius = '10px';
 
-                        let popup = new mapboxgl.Popup({
-                                    closeOnClick: false,
-                                    closeButton: false
-                                }
-                        );
-                        popup.setText('test')
-
                         stormTypeCoordinateSet.forEach(function(coordinates){
                             new mapboxgl.Marker(customMarkerDiv)
                                     .setLngLat(stormTypeCoordinateSet)
-                                    .setPopup(popup)
                                     .addTo(map);
                         });
                     });

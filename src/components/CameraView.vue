@@ -18,6 +18,8 @@
   </div>
 </template>
 <script>
+    import mapboxgl from "mapbox-gl";
+
     export default {
         name: "CameraView",
         data() {
@@ -57,7 +59,13 @@
 
                 return (getDegreesFromRadians(Math.atan2(dLong, dPhi)) + 360.0) % 360.0;
             },
+            removeElements(ListOfElements) {
+                ListOfElements.forEach(function(element) {
+                    element.parentNode.removeChild(element)
+                });
+            },
             flyToHurricanePath: function() {
+                let self = this;
                 let hurricaneTrack = this.coordinatesForSelectedHurricanePath;
                 const degreesToRadians = function(degrees) {
                     return degrees * Math.PI / 180;
@@ -94,6 +102,14 @@
                     }
                     coorDiv.innerHTML = 'the current coordinates are ' + hurricaneTrack[i][0] + ', ' + hurricaneTrack[i][1] + ', and the distance between is ' + mapDistance + ' kilometers.'
 
+
+                    self.removeElements(document.querySelectorAll('.mapboxgl-popup'));
+                    let description = 'test text'
+                    new mapboxgl.Popup()
+                            .setLngLat(hurricaneTrack[i])
+                            .setHTML(description)
+                            .addTo(map);
+
                     map.flyTo({
                         center: [hurricaneTrack[i][0], hurricaneTrack[i][1]],
                         zoom: 7,
@@ -112,7 +128,6 @@
 
                 let flyToStart = function() {
                     map.flyTo({
-
                         center: currentHurricaneTrack[0],
                         zoom: 5,
                         bearing: 20,
