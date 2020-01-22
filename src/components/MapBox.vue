@@ -84,6 +84,7 @@
         MglAttributionControl,
     } from "vue-mapbox";
     import mapStyles from "../assets/mapStyles/mapStyles";
+    import { faPooStorm } from '@fortawesome/free-solid-svg-icons';
 
     export default {
         name: "MapBox",
@@ -168,85 +169,67 @@
                 })
             },
             findCorrectColorForStormType(stormType) {
-                const color = {
-                    'Tropical Wave':'#BEE500',
-                    'Tropical Depression':'#BED300',
-                    'Tropical Storm':'#BEC200',
-                    'Hurricane':'#BEB100',
-                    'Extratropical cyclone':'#BE9F00',
-                    'Subtropical depression':'#BE8E00',
-                    'Subtropical storm':'#BE7D00',
-                    'low pressure system':'#BE6B00',
-                    'non-tropical Disturbance':'#BE5A00',
-                    'Hurricane1':'#BE4900',
-                    'Hurricane2':'#BE3700',
-                    'Hurricane3':'#BE2600',
-                    'Hurricane4':'#BE1500',
-                    'Hurricane5':'#BF0400',
-                    'default':'#080808'
+                const stormIconStyles = {
+                    'low pressure system':['#BEE500',process.env.VUE_APP_STORM_ICON_INTENSITY_1],
+                    'non-tropical Disturbance':['#BED300',process.env.VUE_APP_STORM_ICON_INTENSITY_1],
+                    'Tropical Wave':['#BEC200', process.env.VUE_APP_STORM_ICON_INTENSITY_1],
+                    'Subtropical depression':['#BE8E00', process.env.VUE_APP_STORM_ICON_INTENSITY_3],
+                    'Tropical Depression': ['#BE7D00', process.env.VUE_APP_STORM_ICON_INTENSITY_3],
+                    'Tropical Storm':['#BE6B00', process.env.VUE_APP_STORM_ICON_INTENSITY_4],
+                    'Extratropical cyclone':['#BE6B00', process.env.VUE_APP_STORM_ICON_INTENSITY_4],
+                    'Subtropical storm':['#BE6B00', process.env.VUE_APP_STORM_ICON_INTENSITY_4],
+                    'Hurricane1':['#BE4900', process.env.VUE_APP_HURRICANE_ICON_INTENSITY_1],
+                    'Hurricane2':['#BE3700', process.env.VUE_APP_HURRICANE_ICON_INTENSITY_2],
+                    'Hurricane3':['#BE2600', process.env.VUE_APP_HURRICANE_ICON_INTENSITY_3],
+                    'Hurricane4':['#BE1500', process.env.VUE_APP_HURRICANE_ICON_INTENSITY_4],
+                    'Hurricane5':['#BF0400', process.env.VUE_APP_HURRICANE_ICON_INTENSITY_5],
+                    'default':['#080808', process.env.VUE_APP_STORM_ICON_INTENSITY_1]
                 };
 
-
-                return (color[stormType] || color['default']);
+                return (stormIconStyles[stormType] || stormIconStyles['default']);
             },
             addImageMarkers() {
                 let map = this.map;
                 let self = this;
+                // remove any markers for the map
                 let customImageMarkers = document.querySelectorAll('.custom-image-marker');
                 customImageMarkers.forEach(function(customImageMarker) {
                     customImageMarker.parentNode.removeChild(customImageMarker)
                 });
 
                 let hurricaneData = this.getDataForSelectedHurricane;
-                console.log('should be name ' + JSON.stringify(hurricaneData.features))
                 hurricaneData.features.forEach(function(feature){
                     let stormType = feature.properties.STORMTYPE;
-                    let stormTypeCoordinateSets = [];
-                    stormTypeCoordinateSets.push(feature.geometry.coordinates);
+                    let stormTypeCoordinateSets = null;
+                    stormTypeCoordinateSets = feature.geometry.coordinates;
+
                     stormTypeCoordinateSets.forEach(function(stormTypeCoordinateSet){
+                        let stormIconStyles = self.findCorrectColorForStormType(stormType);
                         let customMarkerDiv = document.createElement('div');
-                        console.log('this is coords', stormTypeCoordinateSets)
                         customMarkerDiv.className = 'custom-image-marker';
-                        customMarkerDiv.style.backgroundColor = self.findCorrectColorForStormType(stormType);
-                        customMarkerDiv.style.width = '10px';
-                        customMarkerDiv.style.width = '10px';
+                        customMarkerDiv.style.backgroundImage ='url(' + stormIconStyles[1] + ')';
 
+                        customMarkerDiv.style.backgroundColor = stormIconStyles[0];
 
-                                            new mapboxgl.Marker(customMarkerDiv)
-                            .setLngLat(stormTypeCoordinateSet)
-                            .addTo(map);
+                        customMarkerDiv.style.width = '40px';
+                        customMarkerDiv.style.height = '40px';
+                        customMarkerDiv.style.borderRadius = '10px';
 
+                        let popup = new mapboxgl.Popup({
+                                    closeOnClick: false,
+                                    closeButton: false
+                                }
+                        );
+                        popup.setText('test')
 
-
+                        stormTypeCoordinateSet.forEach(function(coordinates){
+                            new mapboxgl.Marker(customMarkerDiv)
+                                    .setLngLat(stormTypeCoordinateSet)
+                                    .setPopup(popup)
+                                    .addTo(map);
+                        });
                     });
-
-                    console.log('storm type ', feature.properties.STORMTYPE)
-                    console.log('this is color ', self.findCorrectColorForStormType(stormType))
-
-                })
-
-
-
-
-                // let hurricaneCoordinates = this.getCoordinatesForSelectedHurricane;
-                // console.log('should be awesome ' + JSON.stringify(hurricaneCoordinates))
-                // hurricaneCoordinates.forEach(function (coordinateSet) {
-                //     let el = document.createElement('div');
-                //     el.className = 'custom-image-marker';
-                //     el.style.backgroundImage =
-                //             'url(https://placekitten.com/g/40/40)';
-                //     el.style.width = '40px';
-                //     el.style.height = '40px';
-
-
-// add marker to map
-//                     new mapboxgl.Marker(el)
-//                             .setLngLat(coordinateSet)
-//                             .addTo(map);
-//                 });
-
-
-
+                });
             },
             getColorForTrack() {
                 // Next we need to generate a list of colors based on the number of hurricanes we have.

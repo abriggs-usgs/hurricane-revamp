@@ -138,12 +138,11 @@
                             }
                             let currentAndNextCoordinates = createCurrentAndNextCoordinateList(currentCoordinatePair, nextCoordinatePair);
                             let bearing = self.findBearing(currentAndNextCoordinates[0][1], currentAndNextCoordinates[0][0], currentAndNextCoordinates[1][1], currentAndNextCoordinates[1][0]);
-                            // Note: we have to invert the bearing because Mapbox GL JS runs bearing counter clockwise, while everyone else calculates clockwise
-                            bearing = bearing * -1;
 
                             currentCoordinatePair = nextCoordinatePair;
 
-                            map.jumpTo({center: currentHurricaneTrack[index], zoom: 5, bearing: bearing });
+                            // map.jumpTo({center: currentHurricaneTrack[index], zoom: 5, bearing: bearing });
+                            map.jumpTo({center: currentHurricaneTrack[index], zoom: 5, bearing: 0 });
                             console.log('this is bearing ', bearing)
                         }, index * 1000);
                     });
