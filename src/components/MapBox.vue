@@ -53,6 +53,19 @@
         <MglGeolocateControl position="bottom-right" />
       </MglMap>
     </div>
+    <div class="map-overlay top">
+      <div class="map-overlay-inner">
+        <h2>Slide for Hurricane Progression</h2>
+        <label id="month"></label>
+        <input id="slider" type="range" min="0" max="11" step="1" value="0" />
+      </div>
+      <div class="map-overlay-inner">
+        <div id="legend" class="legend">
+          <div class="bar"></div>
+          <div>jump between recorded measurements</div>
+        </div>
+      </div>
+    </div>
     <!--The next div contains information to show the current zoom level of the map. This will only show on the
           development version of the application. To find the code controlling this, search for 'zoom level display' -->
     <div id="zoom-level-div" />
@@ -174,15 +187,15 @@
                     'non-tropical Disturbance':['#BED300',process.env.VUE_APP_STORM_ICON_INTENSITY_1],
                     'Tropical Wave':['#BEC200', process.env.VUE_APP_STORM_ICON_INTENSITY_1],
                     'Subtropical depression':['#BE8E00', process.env.VUE_APP_STORM_ICON_INTENSITY_3],
-                    'Tropical Depression': ['#BE7D00', process.env.VUE_APP_STORM_ICON_INTENSITY_3],
-                    'Tropical Storm':['#BE6B00', process.env.VUE_APP_STORM_ICON_INTENSITY_4],
+                    'Tropical Depression': ['#BE7D00', process.env.VUE_APP_STORM_ICON_INTENSITY_3, 'equal to or less than 38 mph'],
+                    'Tropical Storm':['#BE6B00', process.env.VUE_APP_STORM_ICON_INTENSITY_4, '39-73 mph'],
                     'Extratropical cyclone':['#BE6B00', process.env.VUE_APP_STORM_ICON_INTENSITY_4],
                     'Subtropical storm':['#BE6B00', process.env.VUE_APP_STORM_ICON_INTENSITY_4],
-                    'Hurricane1':['#BE4900', process.env.VUE_APP_HURRICANE_ICON_INTENSITY_1],
-                    'Hurricane2':['#BE3700', process.env.VUE_APP_HURRICANE_ICON_INTENSITY_2],
-                    'Hurricane3':['#BE2600', process.env.VUE_APP_HURRICANE_ICON_INTENSITY_3],
-                    'Hurricane4':['#BE1500', process.env.VUE_APP_HURRICANE_ICON_INTENSITY_4],
-                    'Hurricane5':['#BF0400', process.env.VUE_APP_HURRICANE_ICON_INTENSITY_5],
+                    'Hurricane1':['#BE4900', process.env.VUE_APP_HURRICANE_ICON_INTENSITY_1, '74-95 mph'],
+                    'Hurricane2':['#BE3700', process.env.VUE_APP_HURRICANE_ICON_INTENSITY_2, '96-110 mph'],
+                    'Hurricane3':['#BE2600', process.env.VUE_APP_HURRICANE_ICON_INTENSITY_3, '111-129 mph'],
+                    'Hurricane4':['#BE1500', process.env.VUE_APP_HURRICANE_ICON_INTENSITY_4, '130-156 mph'],
+                    'Hurricane5':['#BF0400', process.env.VUE_APP_HURRICANE_ICON_INTENSITY_5, 'equal to or greater than 157 mph'],
                     'default':['#080808', process.env.VUE_APP_STORM_ICON_INTENSITY_1]
                 };
 

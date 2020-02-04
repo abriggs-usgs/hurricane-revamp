@@ -13,6 +13,10 @@
       >
         jump
       </button>
+      <button
+         id="fly-with-promise"
+         @click="flyWithPromise"
+      >fly w promise</button>
     </div>
     <div id="coords" />
   </div>
@@ -105,13 +109,13 @@
 
                     self.removeElements(document.querySelectorAll('.mapboxgl-popup'));
                     let description = 'test text'
-                    new mapboxgl.Popup()
+                    new mapboxgl.Popup({closeButton: false})
                             .setLngLat(hurricaneTrack[i])
                             .setHTML(description)
                             .addTo(map);
 
                     map.flyTo({
-                        center: [hurricaneTrack[i][0], hurricaneTrack[i][1]],
+                        center: hurricaneTrack[i],
                         zoom: 7,
                         bearing: 0,
                         speed: 0.12, // make the flying slow
@@ -121,10 +125,41 @@
                     console.log('duration ' + baseDurationOfFlyToAction/distanceAdjustmentMultiplier)
                 }, baseDurationOfFlyToAction)
             },
+            flyWithPromise() {
+                let self = this;
+                let map = this.$store.map;
+                let hurricaneTrack = this.coordinatesForSelectedHurricanePath;
+                let promise = Promise.resolve();
+
+                hurricaneTrack.forEach(function(coordinateSet) {
+                    promise = promise.then(function () {
+                        self.removeElements(document.querySelectorAll('.mapboxgl-popup'));
+                        let description = 'Imagine interesting info here';
+                        new mapboxgl.Popup({closeButton: false})
+                                .setLngLat(coordinateSet)
+                                .setHTML(description)
+                                .addTo(map);
+
+                        map.flyTo({
+                            center: coordinateSet,
+                            zoom: 7,
+                            bearing: 0,
+                            speed: 0.12, // make the flying slow
+                            curve: 1, // change the speed at which it zooms out
+                        });
+                        return new Promise(function (resolve, reject) {
+                            map.on('moveend', function (e) {
+                                resolve('end of current flyTo')
+                            });
+                        });
+                    });
+                });
+            },
             jumpToHurricanePath: function() {
                 let currentHurricaneTrack = this.coordinatesForSelectedHurricanePath;
                 let map = this.$store.map;
                 let self = this;
+
 
                 let flyToStart = function() {
                     map.flyTo({
